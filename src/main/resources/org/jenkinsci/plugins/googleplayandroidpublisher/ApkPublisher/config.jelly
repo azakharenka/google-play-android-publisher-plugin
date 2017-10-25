@@ -9,6 +9,10 @@
     <f:textbox />
   </f:entry>
 
+  <f:entry title="${% Exclude APK files}" field="apkFilesExcludePattern" description="${%Comma-separated list of filenames or patterns to be excluded}">
+    <f:textbox />
+  </f:entry>
+
   <f:entry title="${%Expansion files}" field="expansionFilesPattern">
     <f:textbox />
     <f:checkbox title="${%Re-use expansion files from existing APKs where necessary}" field="usePreviousExpansionFilesIfMissing" />

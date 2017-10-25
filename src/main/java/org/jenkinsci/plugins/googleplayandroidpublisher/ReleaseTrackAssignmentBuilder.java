@@ -2,12 +2,9 @@ package org.jenkinsci.plugins.googleplayandroidpublisher;
 
 import com.google.jenkins.plugins.credentials.oauth.GoogleRobotCredentials;
 import hudson.AbortException;
-import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.Builder;
@@ -54,13 +51,17 @@ public class ReleaseTrackAssignmentBuilder extends GooglePlayBuilder {
     private String apkFilesPattern;
 
     @DataBoundSetter
+    private String apkFilesExcludePattern;
+
+    @DataBoundSetter
     private String trackName;
 
     @DataBoundSetter
     private String rolloutPercentage;
 
     @DataBoundConstructor
-    public ReleaseTrackAssignmentBuilder() {}
+    public ReleaseTrackAssignmentBuilder() {
+    }
 
     public boolean isFromVersionCode() {
         return fromVersionCode == null || fromVersionCode;
@@ -86,9 +87,18 @@ public class ReleaseTrackAssignmentBuilder extends GooglePlayBuilder {
         return fixEmptyAndTrim(apkFilesPattern);
     }
 
+    public String getApkFilesExcludePattern() {
+        return fixEmptyAndTrim(apkFilesExcludePattern);
+    }
+
     private String getExpandedApkFilesPattern() throws IOException, InterruptedException {
         return expand(getApkFilesPattern());
     }
+
+    private String getExpandedApkExcludeFilesPattern() throws IOException, InterruptedException {
+        return expand(getApkFilesExcludePattern());
+    }
+
 
     public String getTrackName() {
         return fixEmptyAndTrim(trackName);
@@ -190,7 +200,8 @@ public class ReleaseTrackAssignmentBuilder extends GooglePlayBuilder {
                 }
             }
         } else {
-            AppInfo info = getApplicationInfoForApks(workspace, logger, getExpandedApkFilesPattern());
+            AppInfo info = getApplicationInfoForApks(workspace, logger, getExpandedApkFilesPattern(),
+                    getExpandedApkExcludeFilesPattern());
             if (info == null) {
                 return false;
             }
@@ -202,7 +213,7 @@ public class ReleaseTrackAssignmentBuilder extends GooglePlayBuilder {
         try {
             GoogleRobotCredentials credentials = getCredentialsHandler().getServiceAccountCredentials();
             return workspace.act(new TrackAssignmentTask(listener, credentials, applicationId, versionCodeList,
-                            fromConfigValue(getCanonicalTrackName()), getRolloutPercentageValue()));
+                    fromConfigValue(getCanonicalTrackName()), getRolloutPercentageValue()));
         } catch (UploadException e) {
             logger.println(String.format("Upload failed: %s", getPublisherErrorMessage(e)));
             logger.println("- No changes have been applied to the Google Play account");
@@ -210,10 +221,10 @@ public class ReleaseTrackAssignmentBuilder extends GooglePlayBuilder {
         return false;
     }
 
-    private AppInfo getApplicationInfoForApks(FilePath workspace, PrintStream logger, String apkFilesPattern)
-            throws IOException, InterruptedException {
+    private AppInfo getApplicationInfoForApks(FilePath workspace, PrintStream logger, String apkFilesPattern,
+                                              String apkFilesExcludePattern) throws IOException, InterruptedException {
         // Find the APK filename(s) which match the pattern after variable expansion
-        List<String> relativePaths = workspace.act(new FindFilesTask(apkFilesPattern));
+        List<String> relativePaths = workspace.act(new FindFilesTask(apkFilesPattern, apkFilesExcludePattern));
         if (relativePaths.isEmpty()) {
             logger.println(String.format("No APK files matching the pattern '%s' could be found", apkFilesPattern));
             return null;

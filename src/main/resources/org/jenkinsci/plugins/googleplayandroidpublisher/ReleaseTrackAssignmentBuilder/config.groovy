@@ -25,6 +25,10 @@ f.radioBlock(name: 'fromVersionCode', title: _('Read version codes to be assigne
         f.textbox()
     }
 
+    f.entry(field: 'apkFilesExcludePattern', title: _('Excluded APK file(s)'), description: _('Comma-separated list of filenames or patterns to be excluded')) {
+        f.textbox()
+    }
+
 }
 
 f.entry(field: 'trackName', title: _('Release track')) {

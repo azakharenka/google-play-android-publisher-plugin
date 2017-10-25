@@ -13,9 +13,12 @@ import java.util.List;
 public class FindFilesTask extends MasterToSlaveFileCallable<List<String>> {
 
     private final String includes;
+    private final String excludes;
 
-    FindFilesTask(String includes) {
+
+    FindFilesTask(String includes, String excludes) {
         this.includes = includes;
+        this.excludes = excludes;
     }
 
     @Override
@@ -27,7 +30,7 @@ public class FindFilesTask extends MasterToSlaveFileCallable<List<String>> {
         }
 
         // Scan for files matching the given pattern
-        String[] files = hudson.Util.createFileSet(baseDir, includes).getDirectoryScanner().getIncludedFiles();
+        String[] files = hudson.Util.createFileSet(baseDir, includes, excludes).getDirectoryScanner().getIncludedFiles();
         return Collections.unmodifiableList(Arrays.asList(files));
     }
 
